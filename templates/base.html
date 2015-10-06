@@ -1,0 +1,167 @@
+{% load staticfiles %}
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Запись ко врачу</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.standalone.min.css">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/locales/bootstrap-datepicker.ru.min.js"></script>
+</head>
+<body>
+<div class="container center-block">
+    <div class="page-header">
+        <h1>Запись ко врачу</h1>
+    </div>
+    {% if messages %}
+        <ul class="messages list-unstyled">
+            {% for message in messages %}
+                <li{% if message.tags %} role="alert" class="alert alert-{{ message.tags }}"{% endif %}>
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <form method="post" action="" class="form-horizontal">
+            {{ form.non_field_errors }}
+            <div class="form-group{% if form.name.errors %} has-error{% endif %}">
+                <label for="id_name" class="col-sm-2 control-label">
+                    Ваше имя
+                </label>
+
+                <div class="col-sm-4">
+                    {{ form.name }}
+                </div>
+                {% if form.name.errors %}
+                    <span class="help-block">{% for error in form.name.errors %}{{ error }}{% endfor %}</span>
+                {% endif %}
+            </div>
+            <div class="form-group{% if form.doctor.errors %} has-error{% endif %}">
+                <label for="id_doctor" class="col-sm-2 control-label">Выберите врача:</label>
+
+                <div class="col-sm-4">
+                    {{ form.doctor }}
+                </div>
+                {% if form.doctor.errors %}
+                    <span class="help-block">{% for error in form.doctor.errors %}{{ error }}{% endfor %}</span>
+                {% endif %}
+            </div>
+            <hr>
+            <div class="form-group{% if form.date.errors %} has-error{% endif %}" id="id_date">
+                <label for="id_date" class="col-sm-2 control-label">Выберите дату:</label>
+
+                <div class="col-sm-4">
+                    {{ form.date }}
+                </div>
+                {% if form.date.errors %}
+                    <span class="help-block">{% for error in form.date.errors %}{{ error }}{% endfor %}</span>
+                {% endif %}
+            </div>
+            <div class="form-group{% if form.time.errors %} has-error{% endif %}" id="id_time">
+                <label for="id_time" class="col-sm-2 control-label">Выберите время:</label>
+
+                <div class="col-sm-4">
+                    {{ form.time }}
+                </div>
+                {% if form.time.errors %}
+                    <span class="help-block">{% for error in form.time.errors %}{{ error }}{% endfor %}</span>
+                {% endif %}
+            </div>
+            {% csrf_token %}
+            <div class="form-group">
+                <div class="col-sm-4 col-sm-offset-2">
+                    <button type="submit" class="btn btn-default">Записаться</button>
+                </div>
+            </div>
+        </form>
+
+        <script>
+            $(document).ready(function () {
+                var doctor_select = $("select#id_doctor");
+                var date_input = $("input#id_date");
+                var time_select = $("select#id_time");
+
+                var init_datepicker = function (doctor_select) {
+                    date_input.datepicker('remove');
+                    var format = 'dd.mm.yyyy', lang = 'ru';
+                    var url = "/gedbd/" + doctor_select.val() + "/";
+                    $.getJSON(url, function (exclude_dates) {
+                        date_input.datepicker({
+                            daysOfWeekDisabled: {{ settings.DISABLED_WEEKDAYS|escapejs }},
+                            language: lang,
+                            autoclose: true,
+                            inline: true,
+                            startDate: $.fn.datepicker.DPGlobal.formatDate(new Date(), format, lang),
+                            format: format,
+                            startView: 0,
+                            weekStart: 1,
+                            datesDisabled: exclude_dates.dates
+                        });
+                    });
+                    if (!date_input.is(':visible')) {
+                        $("#id_date").show();
+                    }
+                };
+
+                // Nasty datepicker .change() bug
+                var _change = '';
+
+                if (!doctor_select.val()) {
+                    $("#id_date").hide();
+                } else {
+                    init_datepicker(doctor_select);
+                }
+                if (!date_input.val()) {
+                    $("#id_time").hide();
+                }
+
+                doctor_select.change(function () {
+                    if (!$(this).val()) {
+                        date_input.datepicker('remove');
+                        date_input.val('');
+                        date_input.change();
+                        $("#id_date").hide();
+                    } else {
+                        date_input.val('');
+                        date_input.change();
+                        init_datepicker(doctor_select);
+                        if (!date_input.is(':visible')) {
+                            $("#id_date").show();
+                        }
+                    }
+                });
+
+                date_input.change(function () {
+                    if (!($(this).val() && doctor_select.val())) {
+                        time_select.empty();
+                        $("#id_time").hide()
+                    } else {
+                        if (_change !== $(this).val()) {
+                            _change = $(this).val();
+                            var url = "/gatbdd/" + doctor_select.val() + "/" + $(this).val() + "/";
+                            $.getJSON(url, function (available_hours) {
+                                var options = '';
+                                for (var i = 0; i < available_hours.hours.length; i++) {
+                                    options += '<option value="' + available_hours.hours[i] + ':00:00">'
+                                            + available_hours.hours[i] + ':00</option>';
+                                }
+                                time_select.html(options);
+                                if (!time_select.is(':visible')) {
+                                    $("#id_time").show();
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+</div>
+</body>
+</html>
