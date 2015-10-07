@@ -15,7 +15,8 @@ def index(request):
         data = form.save()
         messages.success(
             request,
-            'Вы успешно записаны ко врачу {0} на {1:%H:%M} {1:%d.%m.%Y}'.format(
+            'Вы успешно записаны ко врачу {0}'
+            ' на {1:%H:%M} {1:%d.%m.%Y}'.format(
                 data.doctor.name, datetime.combine(data.date, data.time)
             )
         )

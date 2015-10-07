@@ -35,18 +35,23 @@ class RecordManager(models.Manager):
             raise IntegrityError('Doctor ID is not specified.')
         if not day:
             raise IntegrityError('Day is not specified.')
-        qs = self.get_queryset().filter(doctor=doctor_id, date=day).values('time')
+        qs = self.get_queryset().filter(
+            doctor=doctor_id, date=day).values('time')
         all_hours = set(range(*settings.WORKING_HOURS))
         if day == today():
             now = datetime.now()
             all_hours ^= set(range(settings.WORKING_HOURS[0], now.hour + 1))
             qs = qs.filter(time__gte=now)
-        qs = {'hours': list(all_hours ^ {record['time'].hour for record in qs})}
+        qs = {
+            'hours': list(all_hours ^ {record['time'].hour for record in qs})
+        }
         return qs
 
 
 class Record(models.Model):
-    doctor = models.ForeignKey(Doctor, verbose_name='Врач', related_name='records')
+    doctor = models.ForeignKey(
+        Doctor, verbose_name='Врач', related_name='records'
+    )
     date = models.DateField('Дата')
     time = models.TimeField('Время')
     name = models.CharField('Ф.И.О. пациента', max_length=255)
@@ -60,4 +65,6 @@ class Record(models.Model):
         unique_together = ('date', 'time', 'doctor')
 
     def __str__(self):
-        return 'Запись к {0} на {1:%H:%M} {2}'.format(self.doctor.name, self.time, format_date(self.date))
+        return 'Запись к {0} на {1:%H:%M} {2}'.format(
+            self.doctor.name, self.time, format_date(self.date)
+        )

@@ -17,7 +17,8 @@ class RecordModelForm(ModelForm):
         if time:
             try:
                 assert time.hour in range(*settings.WORKING_HOURS)
-                assert time.hour in Record.objects.available_time(doctor, date).get('hours')
+                assert time.hour in Record.objects.available_time(
+                    doctor, date).get('hours')
             except AssertionError:
                 raise ValidationError("Выберите правильное время.")
 
@@ -25,7 +26,8 @@ class RecordModelForm(ModelForm):
             try:
                 assert date
                 assert date >= today()
-                assert date.isoweekday() not in normalize_weekdays(*settings.DISABLED_WEEKDAYS)
+                assert date.isoweekday() not in normalize_weekdays(
+                    *settings.DISABLED_WEEKDAYS)
                 assert date not in Record.objects.excluded_dates(doctor)
             except AssertionError:
                 raise ValidationError("Выберите правильную дату.")

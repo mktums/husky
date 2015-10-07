@@ -15,11 +15,14 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-from doctors.views import index, get_excluded_dates_by_doctor, get_time_by_doctor_and_date
+from doctors.views import (
+    index, get_excluded_dates_by_doctor, get_time_by_doctor_and_date
+)
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^$', index, name='index'),
     url(r'^gedbd/(?P<doctor_id>\d+)/$', get_excluded_dates_by_doctor),
-    url(r'^gatbdd/(?P<doctor_id>\d+)/(?P<date>\d{2}\.\d{2}\.\d{4})/$', get_time_by_doctor_and_date),
+    url(r'^gatbdd/(?P<doctor_id>\d+)/(?P<date>\d{2}\.\d{2}\.\d{4})/$',
+        get_time_by_doctor_and_date),
 ]
