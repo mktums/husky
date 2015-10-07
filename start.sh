@@ -15,7 +15,7 @@ apt-get install -y python3-pip
 # don't need to isolate our project.
 #
 # Therefore we can actually install Django system-wide
-pip3 install Django==1.8.4
+pip3 install Django==1.8.5
 
 # Applying migrations
 python3 manage.py migrate
